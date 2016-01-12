@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dvirsky/go-pylog/logging"
 	"github.com/dvirsky/timedis/events"
 )
 
@@ -31,10 +32,6 @@ func decodeTime(ts string) (time.Time, error) {
 
 func decodeValue(val string) (interface{}, error) {
 	var err error
-	val, err = strconv.Unquote(val)
-	if err != nil {
-		return nil, err
-	}
 
 	if num, err := strconv.ParseInt(val, 10, 64); err == nil {
 		return num, nil
@@ -53,6 +50,13 @@ func decodeValue(val string) (interface{}, error) {
 	}
 	if val == "false" {
 		return false, nil
+	}
+
+	val, err = strconv.Unquote(val)
+	val_ := val
+	if err != nil {
+		logging.Error("Error unquoting value '%s': %s", val_, err)
+		return nil, err
 	}
 
 	return val, nil
