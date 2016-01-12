@@ -12,6 +12,16 @@ type Event struct {
 	Key string
 }
 
+func NewEvent(key string, t time.Time, val interface{}) Event {
+	return Event{
+		Key: key,
+		Record: Record{
+			Time:  t,
+			Value: val,
+		},
+	}
+}
+
 type SampleType int
 
 const (

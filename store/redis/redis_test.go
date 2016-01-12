@@ -18,12 +18,12 @@ func TestEncodeRecord(t *testing.T) {
 		Value: 1,
 	}
 
-	assert.Equal(t, "000000004ffa1f00::1", encodeRecord(r))
+	assert.Equal(t, "4ffa1f00::1", encodeRecord(r))
 	fmt.Println(decodeRecord(encodeRecord(r)))
 	r.Value = "foo"
 
 	enc := encodeRecord(r)
-	assert.Equal(t, `000000004ffa1f00::"foo"`, enc)
+	assert.Equal(t, `4ffa1f00::"foo"`, enc)
 
 	r2, err := decodeRecord(enc)
 

@@ -15,8 +15,8 @@ import (
 
 func encodeTime(t time.Time) string {
 	tv := t.Unix()
-	ret := make([]byte, binary.Size(tv))
-	binary.BigEndian.PutUint64(ret, uint64(tv))
+	ret := make([]byte, 4)
+	binary.BigEndian.PutUint32(ret, uint32(tv))
 	return hex.EncodeToString(ret)
 }
 
@@ -26,7 +26,7 @@ func decodeTime(ts string) (time.Time, error) {
 		return time.Now(), err
 	}
 
-	tv := binary.BigEndian.Uint64(dat)
+	tv := binary.BigEndian.Uint32(dat)
 	return time.Unix(int64(tv), 0), nil
 }
 
