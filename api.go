@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -42,7 +44,7 @@ func (h EntryHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interfac
 }
 
 type RangeHandler struct {
-	Key  string `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we are posting the event to" in:"query"`
+	Key  string `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we want data for" in:"query"`
 	From string `schema:"from" maxlen:"32" required:"true" doc:"range start time, formatted as "2006-01-02 15:04:05" (assuming gmt)"`
 	To   string `schema:"to" maxlen:"32" required:"false" doc:"range end time, formatted as "2006-01-02 15:04:05" (assuming gmt). If not present we default to now"`
 }
@@ -61,6 +63,49 @@ func (h RangeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interfac
 	}
 
 	return engine.Store.Get(h.Key, f, t)
+}
+
+type SubscribeHandler struct {
+	Key string `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we are subscribing to" in:"query"`
+}
+
+func (h SubscribeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
+
+	ch, err := engine.Store.Subscribe(h.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	flusher, _ := w.(http.Flusher)
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	fmt.Fprintf(w, "retry: 500\n\n")
+	flusher.Flush()
+
+	for record := range ch {
+
+		b, err := json.Marshal(record)
+		if err == nil {
+			_, err := fmt.Fprintf(w, "event: record\ndata: %s\n\n", string(b))
+
+			if err == nil {
+				flusher.Flush()
+			} else {
+				logging.Error("Could not send message to subscriber: %s, quitting", err)
+				// TODO: close channel so we won't leak
+				break
+			}
+
+		} else {
+			logging.Error("Could not write message to json", err)
+		}
+
+	}
+
+	return nil, vertex.Hijacked
 }
 
 func decodeTimestamp(ts string) (time.Time, error) {
@@ -129,6 +174,13 @@ func init() {
 					Path:        "/range/{key}",
 					Description: "Get the values in a time range",
 					Handler:     RangeHandler{},
+					Methods:     vertex.GET,
+					Returns:     events.Result{},
+				},
+				{
+					Path:        "/subscribe/{key}",
+					Description: "Subscribe to changes in a series",
+					Handler:     SubscribeHandler{},
 					Methods:     vertex.GET,
 					Returns:     events.Result{},
 				},
