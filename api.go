@@ -11,6 +11,7 @@ import (
 	"github.com/EverythingMe/vertex/middleware"
 	"github.com/dvirsky/go-pylog/logging"
 	"github.com/dvirsky/timedis/events"
+	"github.com/dvirsky/timedis/sampler"
 )
 
 var engine *Engine
@@ -63,6 +64,24 @@ func (h RangeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interfac
 	}
 
 	return engine.Store.Get(h.Key, f, t)
+}
+
+type SampleCounterHandler struct {
+	Key   string  `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we want data for" in:"query"`
+	Value float32 `schema:"value" required:"true"`
+	Rate  float32 `schema:"rate" required:"false" default:"1.0" doc:"sample rate. defaults to 1.0"`
+}
+
+func (h SampleCounterHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
+
+	return "OK", engine.Sampler.Sample(h.Key, h.Value, h.Rate, sampler.SampleCounter)
+}
+
+type SampleTimerHandler SampleCounterHandler
+
+func (h SampleTimerHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
+
+	return "OK", engine.Sampler.Sample(h.Key, h.Value, h.Rate, sampler.SampleTimer)
 }
 
 type SubscribeHandler struct {
@@ -167,6 +186,20 @@ func init() {
 					Path:        "/entry/{key}",
 					Description: "Post an entry into a key",
 					Handler:     EntryHandler{},
+					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
+					Returns:     "OK",
+				},
+				{
+					Path:        "/sample/counter/{key}",
+					Description: "Post a counter sample",
+					Handler:     SampleCounterHandler{},
+					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
+					Returns:     "OK",
+				},
+				{
+					Path:        "/sample/timer/{key}",
+					Description: "Post a timer sample",
+					Handler:     SampleTimerHandler{},
 					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
 					Returns:     "OK",
 				},

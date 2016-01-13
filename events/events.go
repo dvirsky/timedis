@@ -22,21 +22,6 @@ func NewEvent(key string, t time.Time, val interface{}) Event {
 	}
 }
 
-type SampleType int
-
-const (
-	SampleSet SampleType = iota
-	SampleIncrement
-	SampleAverage
-)
-
-type Sample struct {
-	Event
-	Value      float64
-	Type       SampleType
-	SampleRate float64
-}
-
 type Result struct {
 	Records []Record
 	Key     string

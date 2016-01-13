@@ -5,29 +5,26 @@ import (
 
 	"github.com/EverythingMe/vertex"
 	"github.com/dvirsky/go-pylog/logging"
-	"github.com/dvirsky/timedis/events"
+	"github.com/dvirsky/timedis/sampler"
+	"github.com/dvirsky/timedis/store"
 	"github.com/dvirsky/timedis/store/redis"
 )
 
-type Sampler interface {
-	PutSample(...events.Sample) error
-}
-type Store interface {
-	Put(...events.Event) error
-	Get(key string, from, to time.Time) (events.Result, error)
-	Subscribe(key string) (<-chan events.Result, error)
-}
-
 type Engine struct {
-	Sampler Sampler
-	Store   Store
+	Sampler *sampler.Sampler
+	Store   store.Store
 }
 
 func main() {
 
+	store := redis.NewStore("localhost:6379")
+	sampler := sampler.NewSampler(time.Second, store)
 	engine = &Engine{
-		Store: redis.NewStore("localhost:6379"),
+		Store:   store,
+		Sampler: sampler,
 	}
+
+	sampler.Run()
 
 	vertex.ReadConfigs()
 
