@@ -1,10 +1,27 @@
 package events
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Record struct {
 	Time  time.Time
 	Value interface{}
+}
+
+func (r Record) MarshalJSON() ([]byte, error) {
+
+	s := struct {
+		Time  int64       `json:"time"`
+		Value interface{} `json:"y"`
+	}{
+		Time:  r.Time.Unix(),
+		Value: r.Value,
+	}
+
+	return json.Marshal(s)
+
 }
 
 type Event struct {

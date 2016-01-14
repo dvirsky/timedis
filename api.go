@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
 	"time"
 
@@ -218,12 +219,12 @@ func init() {
 					Returns:     events.Result{},
 				},
 
-				//				{
-				//					Path:        "/static/*filepath",
-				//					Description: "Static",
-				//					Handler:     vertex.StaticHandler(path.Join(root, "static"), http.Dir("/tmp")),
-				//					Methods:     vertex.GET,
-				//				},
+				{
+					Path:        "/html/*filepath",
+					Description: "Static",
+					Handler:     vertex.StaticHandler(path.Join(root, "html"), http.Dir("./html")),
+					Methods:     vertex.GET,
+				},
 			},
 		}
 	}, nil)

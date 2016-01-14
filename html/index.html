@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Timedis</title>
+        <meta name="viewport" content="width=800">
+
+
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"/>
+        <link rel="stylesheet" href="/html/css/epoch.css">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        <script src="/html/js/d3.min.js"></script>
+        <script src="/html/js/epoch.js"></script>
+    </head>
+    <body>
+	 <div class="container-fluid">
+	  <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+		<div id="lineChart" style="width: 800px; height: 200px"></div>
+	</div>
+	</div>
+	
+	</body>
+	<script>
+	  $('#lineChart').epoch({
+	    type: 'time.line',
+	    data: [
+			{
+	    			label: "Series 2",
+			    values: [{"time":1452768259,"y":17.919799498746865},{"time":1452768260,"y":12.75},{"time":1452768261,"y":12.86072772898369},{"time":1452768262,"y":12.554927809165099},{"time":1452768263,"y":12.397734424166142},{"time":1452768264,"y":10.122699386503067},{"time":1452768265,"y":4.971857410881801},{"time":1452768266,"y":3.523035230352303},{"time":1452768267,"y":1.6893477240732049},{"time":1452768268,"y":0.7185122569737954},{"time":1452768269,"y":0.37799244015119693},{"time":1452768270,"y":0.41946308724832215},{"time":1452768271,"y":0.5026704366949418},{"time":1452768272,"y":0.5639097744360901},{"time":1452768273,"y":0.5642633228840125},{"time":1452768274,"y":0.5961719485409477},{"time":1452768275,"y":0.5026704366949418},{"time":1452768276,"y":0.5778894472361809},{"time":1452768277,"y":0.6030150753768844},{"time":1452768278,"y":0.6024096385542169},{"time":1452768279,"y":0.5267118133935289},{"time":1452768280,"y":0.576585610428679},{"time":1452768281,"y":0.5850396991224405},{"time":1452768282,"y":0.5433646812957158},{"time":1452768283,"y":0.5021971123666039},{"time":1452768284,"y":0.4813729593972373},{"time":1452768285,"y":0.5439330543933054},{"time":1452768286,"y":0.5739910313901345},{"time":1452768287,"y":0.5918220946915351},{"time":1452768288,"y":0.5207398096606213},{"time":1452768289,"y":0.4852624011502516},{"time":1452768290,"y":0.5027832644999102},{"time":1452768291,"y":0.5184603299293008},{"time":1452768292,"y":0.6124371859296482},{"time":1452768293,"y":0.6125333752159573},{"time":1452768294,"y":0.5501414649481295},{"time":1452768295,"y":0.5032237773234786},{"time":1452768296,"y":0.5589714924538848},{"time":1452768297,"y":0.6140106056377337}]
+  			},
+		]
+	  });
+	</script>
+</html>
