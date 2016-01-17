@@ -19,8 +19,8 @@ const (
 )
 
 type sample interface {
-	Update(value, rate float32) error
-	Extract() []events.Event
+	Update(value, rate float64) error
+	Extract() []*events.Event
 }
 
 type baseSample struct {
@@ -31,10 +31,10 @@ type baseSample struct {
 type counter struct {
 	baseSample
 	Duration time.Duration
-	Value    float32
+	Value    float64
 }
 
-func (c *counter) Update(value, rate float32) error {
+func (c *counter) Update(value, rate float64) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -43,19 +43,19 @@ func (c *counter) Update(value, rate float32) error {
 	return nil
 }
 
-func (c *counter) Extract() []events.Event {
+func (c *counter) Extract() []*events.Event {
 
-	return []events.Event{events.NewEvent(c.Key, time.Now(), c.Value)}
+	return []*events.Event{events.NewEvent(c.Key, time.Now(), c.Value)}
 
 }
 
 type timer struct {
 	baseSample
-	Value      float32
-	NumSamples float32
+	Value      float64
+	NumSamples float64
 }
 
-func (c *timer) Update(value, rate float32) error {
+func (c *timer) Update(value, rate float64) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -64,12 +64,12 @@ func (c *timer) Update(value, rate float32) error {
 	return nil
 }
 
-func (c *timer) Extract() []events.Event {
+func (c *timer) Extract() []*events.Event {
 
 	if c.NumSamples == 0 {
 		return nil
 	}
-	return []events.Event{events.NewEvent(c.Key, time.Now(), c.Value/c.NumSamples)}
+	return []*events.Event{events.NewEvent(c.Key, time.Now(), c.Value/c.NumSamples)}
 
 }
 
@@ -110,14 +110,14 @@ func (s *Sampler) Run() {
 
 }
 
-func (s *Sampler) flush() []events.Event {
+func (s *Sampler) flush() []*events.Event {
 
 	s.lock.Lock()
 	samples := s.samples
 	s.samples = make(map[string]sample)
 	s.lock.Unlock()
 
-	ret := make([]events.Event, 0, len(samples))
+	ret := make([]*events.Event, 0, len(samples))
 	for _, sm := range samples {
 		ret = append(ret, sm.Extract()...)
 	}
@@ -147,7 +147,7 @@ func (s *Sampler) get(key string, t SampleType) (sample, error) {
 	return ret, nil
 }
 
-func (s *Sampler) Sample(key string, value, rate float32, t SampleType) error {
+func (s *Sampler) Sample(key string, value, rate float64, t SampleType) error {
 
 	smp, err := s.get(key, t)
 	if err != nil {

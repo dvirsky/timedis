@@ -7,14 +7,14 @@ import (
 
 type Record struct {
 	Time  time.Time
-	Value interface{}
+	Value float64
 }
 
 func (r Record) MarshalJSON() ([]byte, error) {
 
 	s := struct {
-		Time  int64       `json:"time"`
-		Value interface{} `json:"y"`
+		Time  int64   `json:"time"`
+		Value float64 `json:"y"`
 	}{
 		Time:  r.Time.Unix(),
 		Value: r.Value,
@@ -29,8 +29,8 @@ type Event struct {
 	Key string
 }
 
-func NewEvent(key string, t time.Time, val interface{}) Event {
-	return Event{
+func NewEvent(key string, t time.Time, val float64) *Event {
+	return &Event{
 		Key: key,
 		Record: Record{
 			Time:  t,

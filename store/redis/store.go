@@ -50,7 +50,7 @@ func (s *Store) conn() (redis.Conn, error) {
 	return conn, nil
 }
 
-func (s *Store) Put(evs ...events.Event) error {
+func (s *Store) Put(evs ...*events.Event) error {
 
 	conn, err := s.conn()
 	if err != nil {

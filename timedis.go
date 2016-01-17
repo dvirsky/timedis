@@ -5,6 +5,7 @@ import (
 
 	"github.com/EverythingMe/vertex"
 	"github.com/dvirsky/go-pylog/logging"
+	"github.com/dvirsky/timedis/pipeline"
 	"github.com/dvirsky/timedis/sampler"
 	"github.com/dvirsky/timedis/store"
 	"github.com/dvirsky/timedis/store/redis"
@@ -19,6 +20,8 @@ func main() {
 
 	store := redis.NewStore("localhost:6379")
 	sampler := sampler.NewSampler(time.Second, store)
+
+	pipeline.InitStore(store)
 	engine = &Engine{
 		Store:   store,
 		Sampler: sampler,

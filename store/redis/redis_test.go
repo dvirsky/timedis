@@ -20,10 +20,10 @@ func TestEncodeRecord(t *testing.T) {
 
 	assert.Equal(t, "4ffa1f00::1", encodeRecord(r))
 	fmt.Println(decodeRecord(encodeRecord(r)))
-	r.Value = "foo"
+	r.Value = 300
 
 	enc := encodeRecord(r)
-	assert.Equal(t, `4ffa1f00::"foo"`, enc)
+	assert.Equal(t, `4ffa1f00::300`, enc)
 
 	r2, err := decodeRecord(enc)
 
@@ -83,7 +83,7 @@ func TestSubscribe(t *testing.T) {
 	}()
 
 	rec := events.Record{
-		Value: "foo",
+		Value: 3.141,
 		Time:  time.Now(),
 	}
 
@@ -114,7 +114,7 @@ func TestGet(t *testing.T) {
 			events.Event{
 				Key: k,
 				Record: events.Record{
-					Value: i,
+					Value: float64(i),
 					Time:  tm.Add(time.Duration(i) * time.Second),
 				},
 			},
@@ -126,7 +126,7 @@ func TestGet(t *testing.T) {
 	assert.Len(t, res.Records, 6)
 	assert.Equal(t, res.Key, k)
 	for i, rec := range res.Records {
-		assert.Equal(t, rec.Value.(int64), int64(i))
+		assert.Equal(t, rec.Value, int64(i))
 		assert.Equal(t, rec.Time.Unix(), tm.Add(time.Duration(i)*time.Second).Unix())
 	}
 }

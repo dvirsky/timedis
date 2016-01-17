@@ -12,25 +12,21 @@ import (
 	"github.com/EverythingMe/vertex/middleware"
 	"github.com/dvirsky/go-pylog/logging"
 	"github.com/dvirsky/timedis/events"
+	"github.com/dvirsky/timedis/query"
 	"github.com/dvirsky/timedis/sampler"
 )
 
 var engine *Engine
 
 type EntryHandler struct {
-	Key       string `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we are posting the event to" in:"query"`
-	Value     string `schema:"value" maxlen:"1000" minlen:"1" required:"true" doc:"The value we are putting. Will be parsed as number or string"`
-	Timestamp string `schema:"time" maxlen:"32" required:"false" doc:"The entry's timestamp in the form of "2006-01-02 15:04:05" (assuming gmt). If missing, the current timestamp will be used"`
+	Key       string  `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we are posting the event to" in:"query"`
+	Value     float64 `schema:"value" required:"true" doc:"The value we are putting. Will be parsed as number or string"`
+	Timestamp string  `schema:"time" maxlen:"32" required:"false" doc:"The entry's timestamp in the form of "2006-01-02 15:04:05" (assuming gmt). If missing, the current timestamp will be used"`
 }
 
 const timeFormat = "2006-01-02 15:04:05"
 
 func (h EntryHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
-
-	val, err := decodeValue(h.Value)
-	if err != nil {
-		return nil, err
-	}
 
 	tm := time.Now()
 	if h.Timestamp != "" {
@@ -41,7 +37,7 @@ func (h EntryHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interfac
 		}
 	}
 
-	return "OK", engine.Store.Put(events.NewEvent(h.Key, tm, val))
+	return "OK", engine.Store.Put(events.NewEvent(h.Key, tm, h.Value))
 
 }
 
@@ -69,8 +65,8 @@ func (h RangeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interfac
 
 type SampleCounterHandler struct {
 	Key   string  `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we want data for" in:"query"`
-	Value float32 `schema:"value" required:"true"`
-	Rate  float32 `schema:"rate" required:"false" default:"1.0" doc:"sample rate. defaults to 1.0"`
+	Value float64 `schema:"value" required:"true"`
+	Rate  float64 `schema:"rate" required:"false" default:"1.0" doc:"sample rate. defaults to 1.0"`
 }
 
 func (h SampleCounterHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
@@ -86,21 +82,30 @@ func (h SampleTimerHandler) Handle(w http.ResponseWriter, r *vertex.Request) (in
 }
 
 type SubscribeHandler struct {
-	Key string `schema:"key" maxlen:"1000" pattern:"[a-zA-Z_\.]+" required:"true" doc:"The key we are subscribing to" in:"query"`
+	Query string `schema:"query" maxlen:"10000" required:"true" doc:"The query encoded as json" in:"query"`
 }
 
 func (h SubscribeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (interface{}, error) {
 
-	ch, err := engine.Store.Subscribe(h.Key)
+	q, err := query.Parse(h.Query)
+	if err != nil {
+		return nil, err
+	}
+	source, err := q.Eval()
 	if err != nil {
 		return nil, err
 	}
 
+	ch, stopch, err := source.Stream()
+	if err != nil {
+		return nil, err
+	}
 	flusher, _ := w.(http.Flusher)
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 
 	fmt.Fprintf(w, "retry: 500\n\n")
 	flusher.Flush()
@@ -116,6 +121,7 @@ func (h SubscribeHandler) Handle(w http.ResponseWriter, r *vertex.Request) (inte
 			} else {
 				logging.Error("Could not send message to subscriber: %s, quitting", err)
 				// TODO: close channel so we won't leak
+				stopch <- true
 				break
 			}
 
@@ -187,21 +193,21 @@ func init() {
 					Path:        "/entry/{key}",
 					Description: "Post an entry into a key",
 					Handler:     EntryHandler{},
-					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
+					Methods:     vertex.POST,
 					Returns:     "OK",
 				},
 				{
 					Path:        "/sample/counter/{key}",
 					Description: "Post a counter sample",
 					Handler:     SampleCounterHandler{},
-					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
+					Methods:     vertex.POST,
 					Returns:     "OK",
 				},
 				{
 					Path:        "/sample/timer/{key}",
 					Description: "Post a timer sample",
 					Handler:     SampleTimerHandler{},
-					Methods:     vertex.POST | vertex.GET, // TODO: Remove GET
+					Methods:     vertex.POST,
 					Returns:     "OK",
 				},
 				{
@@ -212,7 +218,7 @@ func init() {
 					Returns:     events.Result{},
 				},
 				{
-					Path:        "/subscribe/{key}",
+					Path:        "/subscribe",
 					Description: "Subscribe to changes in a series",
 					Handler:     SubscribeHandler{},
 					Methods:     vertex.GET,
